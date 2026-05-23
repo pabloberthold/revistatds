@@ -346,6 +346,86 @@
       letter-spacing: 0.03em;
     }
 
+    /* ─── REDES ─── */
+    .redes {
+      padding: 4.5rem 5rem;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .redes-titulo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 400;
+      margin-bottom: 2.5rem;
+    }
+
+    .redes-grid {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .red-card {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 1.2rem 1.8rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      text-decoration: none;
+      color: var(--ink);
+      background: rgba(255,255,255,0.45);
+      transition: border-color 0.2s, background 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      min-width: 260px;
+    }
+
+    .red-card:hover {
+      border-color: var(--orange);
+      background: rgba(217,95,26,0.05);
+      transform: translateY(-3px);
+    }
+
+    .red-icon {
+      color: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .red-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .red-nombre {
+      font-size: 0.92rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+    }
+
+    .red-handle {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .red-arrow {
+      margin-left: auto;
+      color: var(--orange);
+      font-size: 1.1rem;
+      transition: transform 0.2s;
+    }
+
+    .red-card:hover .red-arrow { transform: translateX(4px); }
+
+    @media (max-width: 860px) {
+      .redes { padding: 3rem 1.5rem; }
+      .red-card { min-width: 100%; }
+    }
+
     /* ─── CTA BAND ─── */
     .cta-band {
       background-image: url('imagenes/fondo.jpeg');
@@ -434,6 +514,7 @@
     <ul class="nav-links">
       <li><a href="#sobre">La revista</a></li>
       <li><a href="#indice">Índice</a></li>
+      <li><a href="#redes">Redes</a></li>
       <li><a href="documentos/Revista TdS N°1.pdf" download>Descargar PDF</a></li>
     </ul>
   </nav>
@@ -541,6 +622,28 @@
           <span class="article-author">— — —</span>
         </a>
 
+      </div>
+    </section>
+
+    <!-- REDES -->
+    <section class="redes" id="redes">
+      <p class="section-label">Seguinos</p>
+      <h2 class="redes-titulo">Nuestras Redes</h2>
+      <div class="redes-grid">
+        <a href="https://www.instagram.com/revistatramasdelsur?igsh=MWpoNmkwczdpbGJtcQ==" target="_blank" rel="noopener" class="red-card">
+          <div class="red-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+          <div class="red-info">
+            <span class="red-nombre">Instagram</span>
+            <span class="red-handle">@revistatramasdelsur</span>
+          </div>
+          <div class="red-arrow">→</div>
+        </a>
       </div>
     </section>
 
