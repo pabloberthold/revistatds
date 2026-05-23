@@ -426,17 +426,13 @@
       .red-card { min-width: 100%; }
     }
 
-    /* ─── CTA BAND ─── */
+    /* ─── DESCARGAS DINÁMICAS ─── */
     .cta-band {
       background-image: url('imagenes/fondo.jpeg');
       background-size: cover;
       position: relative;
       overflow: hidden;
       padding: 5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 2rem;
       border-top: 1px solid var(--rule);
     }
 
@@ -449,6 +445,12 @@
 
     .cta-band > * { position: relative; z-index: 1; }
 
+    .cta-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
     .cta-text {
       font-family: 'Playfair Display', serif;
       font-size: clamp(1.5rem, 3vw, 2rem);
@@ -458,6 +460,72 @@
     }
 
     .cta-text em { font-style: italic; color: var(--orange); }
+
+    .downloads-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .downloads-loading,
+    .downloads-empty {
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+      font-style: italic;
+    }
+
+    .btn-download-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+      padding: 1rem 1.6rem 1rem 1.4rem;
+      background: var(--ink);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 3px;
+      position: relative;
+      transition: background 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      min-width: 180px;
+    }
+
+    .btn-download-card:hover {
+      background: var(--orange);
+      transform: translateY(-3px);
+    }
+
+    .btn-download-card svg {
+      position: absolute;
+      bottom: 1rem;
+      right: 1.2rem;
+      width: 16px; height: 16px;
+      stroke: rgba(255,255,255,0.6);
+      transition: stroke 0.2s, transform 0.2s;
+    }
+
+    .btn-download-card:hover svg {
+      stroke: #fff;
+      transform: translateY(2px);
+    }
+
+    .btn-download-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .btn-download-edition {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      padding-right: 2rem;
+    }
+
+    @media (max-width: 860px) {
+      .cta-band { padding: 3rem 1.5rem; }
+      .btn-download-card { min-width: calc(50% - 0.5rem); }
+    }
 
     /* ─── FOOTER ─── */
     footer {
@@ -515,7 +583,7 @@
       <li><a href="#sobre">La revista</a></li>
       <li><a href="#indice">Índice</a></li>
       <li><a href="#redes">Redes</a></li>
-      <li><a href="documentos/Revista TdS N°1.pdf" download>Descargar PDF</a></li>
+      <li><a href="#descargas">Descargar PDF</a></li>
     </ul>
   </nav>
 
@@ -527,9 +595,9 @@
       <img src="imagenes/logo.jpeg" alt="Tramas del Sur" class="hero-logo" />
       <p class="hero-tagline">Una publicación independiente sobre arte, cultura y las ideas que tejen nuestro sur.</p>
       <div class="hero-actions">
-        <a href="documentos/Revista TdS N°1.pdf" download class="btn-primary">
+        <a href="#descargas" class="btn-primary">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 14l5 5 5-5M4 20h16"/></svg>
-          Descargar N°1 — gratis
+          Ver ediciones
         </a>
         <a href="#indice" class="btn-ghost">Ver índice ↓</a>
       </div>
@@ -660,14 +728,64 @@
       </div>
     </section>
 
-    <!-- CTA -->
-    <div class="cta-band">
-      <p class="cta-text">Descargá la primera edición <em>de forma gratuita.</em></p>
-      <a href="documentos/Revista TdS N°1.pdf" download class="btn-primary">
-        <svg viewBox="0 0 24 24"><path d="M12 3v12M7 14l5 5 5-5M4 20h16"/></svg>
-        Descargar PDF — N°1
-      </a>
+    <!-- DESCARGAS -->
+    <div class="cta-band" id="descargas">
+      <div class="cta-inner">
+        <p class="cta-text">Descargá nuestras ediciones <em>de forma gratuita.</em></p>
+        <div class="downloads-grid" id="downloads-grid">
+          <!-- botones generados por JS -->
+          <div class="downloads-loading">Buscando ediciones…</div>
+        </div>
+      </div>
     </div>
+
+    <script>
+      (async function() {
+        const grid = document.getElementById('downloads-grid');
+        const MAX_EDITIONS = 20; // busca hasta la edición 20
+        const found = [];
+
+        // Prueba si el archivo existe con una petición HEAD
+        async function exists(url) {
+          try {
+            const r = await fetch(url, { method: 'HEAD' });
+            return r.ok;
+          } catch { return false; }
+        }
+
+        for (let i = 1; i <= MAX_EDITIONS; i++) {
+          const url = `documentos/rtds${i}.pdf`;
+          if (await exists(url)) {
+            found.push({ num: i, url });
+          } else {
+            // Si hay un hueco, seguimos buscando hasta MAX_EDITIONS
+            // para cubrir el caso de numeración no continua
+          }
+        }
+
+        grid.innerHTML = ''; // limpia el "Buscando…"
+
+        if (found.length === 0) {
+          grid.innerHTML = '<p class="downloads-empty">Próximamente disponible.</p>';
+          return;
+        }
+
+        found.forEach(({ num, url }) => {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = '';
+          a.className = 'btn-download-card';
+          a.innerHTML = `
+            <span class="btn-download-label">Descargar</span>
+            <span class="btn-download-edition">Edición N° ${num}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12M7 14l5 5 5-5M4 20h16"/>
+            </svg>
+          `;
+          grid.appendChild(a);
+        });
+      })();
+    </script>
 
   </main>
 
