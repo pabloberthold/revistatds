@@ -76,6 +76,11 @@
       height: 38px;
       width: auto;
       display: block;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .nav-logo img:hover {
+      transform: scale(1.12);
     }
 
     .nav-links {
@@ -119,10 +124,14 @@
       margin-bottom: 2rem;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.08));
       animation: fadeUp 0.8s 0.2s both;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
     }
 
+    .hero-logo:hover { transform: scale(1.06); }
+
     .hero-tagline {
-      font-family: 'Cormorant Garamond, serif;
+      font-family: 'Playfair Display', serif;
       font-style: italic;
       font-size: clamp(1.05rem, 2.5vw, 1.35rem);
       color: var(--ink-soft);
@@ -228,7 +237,11 @@
     .about-logo img {
       width: 180px;
       opacity: 0.9;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
     }
+
+    .about-logo img:hover { transform: scale(1.08); }
 
     .about-text {
       font-family: 'Playfair Display', serif;
@@ -376,7 +389,13 @@
       background: rgba(240,236,227,0.6);
     }
 
-    .footer-logo img { height: 30px; }
+    .footer-logo img {
+      height: 30px;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+
+    .footer-logo img:hover { transform: scale(1.1); }
 
     .footer-copy {
       font-size: 0.74rem;
