@@ -3,6 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso — Tramas del Sur</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #f4f4f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-card {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+      max-width: 360px;
+      width: 100%;
+    }
+    h2 { color: #1e1a17; margin-top: 0; font-size: 20px; border-bottom: 2px solid #d95f1a; padding-bottom: 8px; }
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 15px 0;
+      border: 1px solid #cec8bc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    input[type="password"]:focus { outline: none; border-color: #d95f1a; }
+    button {
+      background: #d95f1a;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { background: #b84d12; }
+    #error-msg { color: #c0392b; font-size: 14px; margin-top: 10px; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="login-card" id="loginBox">
+  <h2>Control de Acceso</h2>
+  <p style="font-size: 14px; color: #666;">Ingresá la contraseña para acceder al generador de notas.</p>
+  <input type="password" id="passwordField" placeholder="Contraseña">
+  <button onclick="verificarClave()">Ingresar</button>
+  <div id="error-msg">Contraseña incorrecta</div>
+</div>
+
+<script>
+// Hash SHA-256 correspondiente a la clave "notasentrama$"
+const hashCorrecto = "0be07d9f95780fe1655097b6ca053075677b102b4d1b033d45f3408560113171";
+
+async function verificarClave() {
+  const clave = document.getElementById('passwordField').value;
+  
+  // Calcular el hash de la clave ingresada
+  const encoder = new TextEncoder();
+  const data = encoder.encode(clave);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  if (hashHex === hashCorrecto) {
+    sessionStorage.setItem('auth_tramas', 'true');
+    cargarGenerador();
+  } else {
+    document.getElementById('error-msg').style.display = 'block';
+  }
+}
+
+// Escuchar si presionan ENTER en el input de contraseña
+document.getElementById('passwordField').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    verificarClave();
+  }
+});
+
+function cargarGenerador() {
+  // Inyección limpia de todo el DOM del generador
+  document.documentElement.innerHTML = `
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generador de Notas — Tramas del Sur</title>
   <style>
     body {
@@ -132,81 +224,83 @@
     <button type="submit" class="btn-submit">Generar y Descargar Archivo HTML</button>
   </form>
 </div>
+</body>
+</html>
+  `;
 
-<script>
-// Escape básico de caracteres HTML para evitar romper la estructura generada
-function escapeHtml(text) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  // Levantamos la lógica de procesamiento una vez reescrito el DOM
+  ejecutarLogicaGenerador();
 }
 
-function procesarTextoAHtml(texto) {
-  texto = escapeHtml(texto);
-  // Normalizar saltos de línea
-  texto = texto.replace(/\r\n|\r/g, "\n");
-  // Dividir por párrafos (doble salto de línea)
-  const bloques = texto.split("\n\n");
-  let htmlResultado = "";
-
-  bloques.forEach(bloque => {
-    bloque = bloque.trim();
-    if (!bloque) return;
-
-    if (bloque.indexOf('## ') === 0) {
-      htmlResultado += `      <h2>${bloque.substring(3)}</h2>\n`;
-    } else if (bloque.indexOf('### ') === 0) {
-      htmlResultado += `      <h3>${bloque.substring(4)}</h3>\n`;
-    } else if (bloque.indexOf('&gt; ') === 0) {
-      htmlResultado += `      blockquote>\n        "${bloque.substring(5)}"\n      </blockquote>\n`;
-    } else if (bloque === '---') {
-      htmlResultado += `      <hr />\n`;
-    } else if (bloque === '~~~') {
-      htmlResultado += `      <div class="thread-divider">\n        <div class="thread-line"></div>\n        <svg width="80" height="20" viewBox="0 0 80 20" fill="none">\n          <path d="M2 10 C8 4,14 16,20 10 S32 4,40 10 S52 16,60 10 S70 5,78 10" stroke="#d95f1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        </svg>\n        <div class="thread-line"></div>\n      </div>\n`;
-    } else {
-      // Reemplazar saltos de línea simples por <br />
-      const contenido = bloque.replace(/\n/g, "<br />");
-      htmlResultado += `      <p>\n        ${contenido}\n      </p>\n`;
-    }
-  });
-
-  return htmlResultado;
-}
-
-function generarSlug(text) {
-  return text.toString().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quita acentos
-    .replace(/\s+/g, '-')           // Reemplaza espacios por guiones
-    .replace(/[^\w\-]+/g, '')       // Remueve caracteres no válidos
-    .replace(/\-\-+/g, '-')         // Remueve guiones duplicados
-    .replace(/^-+/, '')              // Remueve guiones al inicio
-    .replace(/-+$/, '');             // Remueve guiones al final
-}
-
-document.getElementById('generatorForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-
-  const categoria = document.getElementById('categoria').value;
-  const titulo = document.getElementById('titulo').value;
-  const bajada = document.getElementById('bajada').value;
-  const autor = document.getElementById('autor').value;
-  const fecha = document.getElementById('fecha').value;
-  const imagen = document.getElementById('imagen').value;
-  const img_alt = document.getElementById('img_alt').value;
-  const cuerpoRaw = document.getElementById('cuerpo').value;
-
-  const cuerpoHtml = procesarTextoAHtml(cuerpoRaw);
-
-  let bloqueImagen = "";
-  if (imagen.trim() !== "") {
-    bloqueImagen = `    <div class="article-cover">\n      <img src="${escapeHtml(imagen)}" alt="${escapeHtml(img_alt)}" />\n    </div>\n`;
+function ejecutarLogicaGenerador() {
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  // Tu estructura de template inyectada directamente desde JS
-  const htmlFinal = `<!DOCTYPE html>
+  function procesarTextoAHtml(texto) {
+    texto = escapeHtml(texto);
+    texto = texto.replace(/\r\n|\r/g, "\n");
+    const bloques = texto.split("\n\n");
+    let htmlResultado = "";
+
+    bloques.forEach(bloque => {
+      bloque = bloque.trim();
+      if (!bloque) return;
+
+      if (bloque.indexOf('## ') === 0) {
+        htmlResultado += `      <h2>${bloque.substring(3)}</h2>\n`;
+      } else if (bloque.indexOf('### ') === 0) {
+        htmlResultado += `      <h3>${bloque.substring(4)}</h3>\n`;
+      } else if (bloque.indexOf('&gt; ') === 0) {
+        htmlResultado += `      blockquote>\n        "${bloque.substring(5)}"\n      </blockquote>\n`;
+      } else if (bloque === '---') {
+        htmlResultado += `      <hr />\n`;
+      } else if (bloque === '~~~') {
+        htmlResultado += `      <div class="thread-divider">\n        <div class="thread-line"></div>\n        <svg width="80" height="20" viewBox="0 0 80 20" fill="none">\n          <path d="M2 10 C8 4,14 16,20 10 S32 4,40 10 S52 16,60 10 S70 5,78 10" stroke="#d95f1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        </svg>\n        <div class="thread-line"></div>\n      </div>\n`;
+      } else {
+        const contenido = bloque.replace(/\n/g, "<br />");
+        htmlResultado += `      <p>\n        ${contenido}\n      </p>\n`;
+      }
+    });
+
+    return htmlResultado;
+  }
+
+  function generarSlug(text) {
+    return text.toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
+  document.getElementById('generatorForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const categoria = document.getElementById('categoria').value;
+    const titulo = document.getElementById('titulo').value;
+    const bajada = document.getElementById('bajada').value;
+    const autor = document.getElementById('autor').value;
+    const fecha = document.getElementById('fecha').value;
+    const imagen = document.getElementById('imagen').value;
+    const img_alt = document.getElementById('img_alt').value;
+    const cuerpoRaw = document.getElementById('cuerpo').value;
+
+    const cuerpoHtml = procesarTextoAHtml(cuerpoRaw);
+
+    let bloqueImagen = "";
+    if (imagen.trim() !== "") {
+      bloqueImagen = `    <div class="article-cover">\n      <img src="${escapeHtml(imagen)}" alt="${escapeHtml(img_alt)}" />\n    </div>\n`;
+    }
+
+    const htmlFinal = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -521,19 +615,23 @@ ${cuerpoHtml}
 </body>
 </html>`;
 
-  // Crear elemento temporal para forzar la descarga en el cliente
-  const blob = new Blob([htmlFinal], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const dummyAnchor = document.createElement('a');
-  dummyAnchor.href = url;
-  dummyAnchor.download = `${generarSlug(titulo)}.html`;
-  
-  document.body.appendChild(dummyAnchor);
-  dummyAnchor.click();
-  document.body.removeChild(dummyAnchor);
-  URL.revokeObjectURL(url);
-});
-</script>
+    const blob = new Blob([htmlFinal], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const dummyAnchor = document.createElement('a');
+    dummyAnchor.href = url;
+    dummyAnchor.download = `${generarSlug(titulo)}.html`;
+    
+    document.body.appendChild(dummyAnchor);
+    dummyAnchor.click();
+    document.body.removeChild(dummyAnchor);
+    URL.revokeObjectURL(url);
+  });
+}
 
+// Persistir la sesión si recargan la pestaña
+if (sessionStorage.getItem('auth_tramas') === 'true') {
+  window.onload = cargarGenerador;
+}
+</script>
 </body>
 </html>
