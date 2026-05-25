@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Notas — Tramas del Sur</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f4f7;
+      color: #333;
+      line-height: 1.5;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    h1 { margin-top: 0; color: #1e1a17; border-bottom: 2px solid #d95f1a; padding-bottom: 10px; font-size: 24px; }
+    .instrucciones {
+      background: #fdf8f5;
+      border-left: 4px solid #d95f1a;
+      padding: 15px;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .instrucciones code { background: #eaeaea; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+    .form-group { margin-bottom: 20px; }
+    .form-row { display: flex; gap: 20px; }
+    .form-row .form-group { flex: 1; }
+    label { display: block; font-weight: bold; margin-bottom: 6px; color: #4a443e; font-size: 14px; }
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cec8bc;
+      border-radius: 4px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #d95f1a;
+      box-shadow: 0 0 0 3px rgba(217,95,26,0.1);
+    }
+    textarea { resize: vertical; font-family: inherit; }
+    .btn-submit {
+      background-color: #d95f1a;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+    .btn-submit:hover { background-color: #b84d12; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Generador de Notas — Tramas del Sur</h1>
+  
+  <div class="instrucciones">
+    <strong>Guía rápida para el Cuerpo de la Nota:</strong><br>
+    Escribí normal. Para aplicar formatos del formato original separá los bloques con <strong>dos ENTER</strong> y usá estos prefijos:
+    <ul style="margin: 5px 0 0 20px; padding: 0;">
+      <li><code>## Subtítulo</code> para un subtítulo principal de sección.</li>
+      <li><code>### Subtítulo</code> para un subtítulo secundario (itálica).</li>
+      <li><code>> Texto de la cita</code> para insertar una cita destacada con borde naranja.</li>
+      <li><code>---</code> (tres guiones) para una línea divisoria gris simple.</li>
+      <li><code>~~~</code> (tres tildes de virgulilla) para insertar el <strong>hilo decorativo naranja ondeado</strong>.</li>
+    </ul>
+  </div>
+
+  <form id="generatorForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="categoria">Categoría</label>
+        <select id="categoria" name="categoria">
+          <option value="Editorial">Editorial</option>
+          <option value="Entrevista">Entrevista</option>
+          <option value="Ensayo">Ensayo</option>
+          <option value="Crónica">Crónica</option>
+          <option value="Reseña">Reseña</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="titulo">Título Principal</label>
+        <input type="text" id="titulo" name="titulo" required placeholder="Ej: La persistencia de la memoria">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="bajada">Bajada / Copete</label>
+      <textarea id="bajada" name="bajada" rows="2" placeholder="Una oración que amplía el título y engancha al lector."></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="autor">Autor</label>
+        <input type="text" id="autor" name="autor" placeholder="Ej: Juan Pérez">
+      </div>
+      <div class="form-group">
+        <label for="fecha">Fecha de Publicación</label>
+        <input type="text" id="fecha" name="fecha" placeholder="Ej: Mayo 2026">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="imagen">Nombre del archivo de imagen de portada (Opcional)</label>
+        <input type="text" id="imagen" name="imagen" placeholder="Ej: portada-nota.jpeg">
+      </div>
+      <div class="form-group">
+        <label for="img_alt">Descripción de la imagen (Accesibilidad)</label>
+        <input type="text" id="img_alt" name="img_alt" placeholder="Ej: Fotografía del puerto al amanecer">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="cuerpo">Cuerpo de la Nota</label>
+      <textarea id="cuerpo" name="cuerpo" rows="15" required placeholder="Escribí acá el contenido de la nota..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">Generar y Descargar Archivo HTML</button>
+  </form>
+</div>
+
+<script>
+// Escape básico de caracteres HTML para evitar romper la estructura generada
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function procesarTextoAHtml(texto) {
+  texto = escapeHtml(texto);
+  // Normalizar saltos de línea
+  texto = texto.replace(/\r\n|\r/g, "\n");
+  // Dividir por párrafos (doble salto de línea)
+  const bloques = texto.split("\n\n");
+  let htmlResultado = "";
+
+  bloques.forEach(bloque => {
+    bloque = bloque.trim();
+    if (!bloque) return;
+
+    if (bloque.indexOf('## ') === 0) {
+      htmlResultado += `      <h2>${bloque.substring(3)}</h2>\n`;
+    } else if (bloque.indexOf('### ') === 0) {
+      htmlResultado += `      <h3>${bloque.substring(4)}</h3>\n`;
+    } else if (bloque.indexOf('&gt; ') === 0) {
+      htmlResultado += `      blockquote>\n        "${bloque.substring(5)}"\n      </blockquote>\n`;
+    } else if (bloque === '---') {
+      htmlResultado += `      <hr />\n`;
+    } else if (bloque === '~~~') {
+      htmlResultado += `      <div class="thread-divider">\n        <div class="thread-line"></div>\n        <svg width="80" height="20" viewBox="0 0 80 20" fill="none">\n          <path d="M2 10 C8 4,14 16,20 10 S32 4,40 10 S52 16,60 10 S70 5,78 10" stroke="#d95f1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        </svg>\n        <div class="thread-line"></div>\n      </div>\n`;
+    } else {
+      // Reemplazar saltos de línea simples por <br />
+      const contenido = bloque.replace(/\n/g, "<br />");
+      htmlResultado += `      <p>\n        ${contenido}\n      </p>\n`;
+    }
+  });
+
+  return htmlResultado;
+}
+
+function generarSlug(text) {
+  return text.toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quita acentos
+    .replace(/\s+/g, '-')           // Reemplaza espacios por guiones
+    .replace(/[^\w\-]+/g, '')       // Remueve caracteres no válidos
+    .replace(/\-\-+/g, '-')         // Remueve guiones duplicados
+    .replace(/^-+/, '')              // Remueve guiones al inicio
+    .replace(/-+$/, '');             // Remueve guiones al final
+}
+
+document.getElementById('generatorForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const categoria = document.getElementById('categoria').value;
+  const titulo = document.getElementById('titulo').value;
+  const bajada = document.getElementById('bajada').value;
+  const autor = document.getElementById('autor').value;
+  const fecha = document.getElementById('fecha').value;
+  const imagen = document.getElementById('imagen').value;
+  const img_alt = document.getElementById('img_alt').value;
+  const cuerpoRaw = document.getElementById('cuerpo').value;
+
+  const cuerpoHtml = procesarTextoAHtml(cuerpoRaw);
+
+  let bloqueImagen = "";
+  if (imagen.trim() !== "") {
+    bloqueImagen = `    <div class="article-cover">\n      <img src="${escapeHtml(imagen)}" alt="${escapeHtml(img_alt)}" />\n    </div>\n`;
+  }
+
+  // Tu estructura de template inyectada directamente desde JS
+  const htmlFinal = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(titulo)} — Tramas del Sur</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #1e1a17;
+      --ink-soft:  #4a443e;
+      --ink-muted: #8a837a;
+      --orange:    #d95f1a;
+      --paper:     #f0ece3;
+      --rule:      #cec8bc;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--paper);
+      background-image: url('../imagenes/fondo.jpeg');
+      background-size: cover;
+      background-attachment: fixed;
+      color: var(--ink);
+      font-family: 'Lato', sans-serif;
+      font-weight: 300;
+      font-size: 17px;
+      line-height: 1.75;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(240,236,227,0.78);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3.5rem;
+      height: 60px;
+      background-image: url('../imagenes/fondo.jpeg');
+      background-size: cover;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    nav::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(240,236,227,0.88);
+      z-index: 0;
+    }
+
+    nav > * { position: relative; z-index: 1; }
+
+    .nav-logo img {
+      height: 36px;
+      width: auto;
+      display: block;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .nav-logo img:hover { transform: scale(1.1); }
+
+    .btn-volver {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .btn-volver:hover { color: var(--orange); }
+
+    .btn-volver svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* ─── CONTENIDO ─── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 7rem 2rem 6rem;
+    }
+
+    /* ─── CABECERA DEL ARTÍCULO ─── */
+    .article-header {
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .article-categoria {
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1rem;
+    }
+
+    .article-titulo {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 400;
+      line-height: 1.15;
+      margin-bottom: 1.2rem;
+    }
+
+    .article-bajada {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--ink-soft);
+      line-height: 1.65;
+      margin-bottom: 1.5rem;
+    }
+
+    .article-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .article-meta span { display: flex; align-items: center; gap: 0.4rem; }
+
+    /* ─── IMAGEN DE PORTADA (OPCIONAL) ─── */
+    .article-cover {
+      width: 100%;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 2.5rem;
+    }
+
+    .article-cover img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ─── CUERPO DEL ARTÍCULO ─── */
+    .article-body {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--ink);
+    }
+
+    /* párrafos */
+    .article-body p { margin-bottom: 1.5rem; }
+
+    /* subtítulos internos */
+    .article-body h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin: 2.5rem 0 1rem;
+      color: var(--ink);
+    }
+
+    .article-body h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-style: italic;
+      font-weight: 400;
+      margin: 2rem 0 0.8rem;
+      color: var(--ink-soft);
+    }
+
+    /* cita destacada */
+    .article-body blockquote {
+      border-left: 3px solid var(--orange);
+      padding: 0.5rem 0 0.5rem 1.8rem;
+      margin: 2rem 0;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--ink-soft);
+      line-height: 1.6;
+    }
+
+    /* separador de sección */
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    /* hilo naranja decorativo */
+    .thread-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 2.5rem 0;
+    }
+
+    .thread-line { flex: 1; height: 1px; background: var(--rule); }
+
+    /* ─── PIE DEL ARTÍCULO ─── */
+    .article-footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .article-footer-logo img {
+      height: 28px;
+      opacity: 0.75;
+      transition: opacity 0.2s, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .article-footer-logo img:hover { opacity: 1; transform: scale(1.08); }
+
+    .btn-volver-pie {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.6rem;
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+
+    .btn-volver-pie:hover { background: var(--orange); }
+
+    .btn-volver-pie svg {
+      width: 13px; height: 13px;
+      stroke: #fff; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 700px) {
+      nav { padding: 0 1.5rem; }
+      main { padding: 6rem 1.2rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="https://tramasdelsur.com.ar" class="nav-logo">
+      <img src="../imagenes/logo.jpeg" alt="Tramas del Sur" />
+    </a>
+    <a href="https://tramasdelsur.com.ar" class="btn-volver">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Volver al inicio
+    </a>
+  </nav>
+
+  <main>
+    <header class="article-header">
+      <p class="article-categoria">${escapeHtml(categoria)}</p>
+      <h1 class="article-titulo">${escapeHtml(titulo)}</h1>
+      <p class="article-bajada">${escapeHtml(bajada)}</p>
+      <div class="article-meta">
+        <span>Por ${escapeHtml(autor)}</span>
+        <span>${escapeHtml(fecha)}</span>
+      </div>
+    </header>
+
+${bloqueImagen}
+    <article class="article-body">
+${cuerpoHtml}
+    </article>
+
+    <footer class="article-footer">
+      <a href="https://tramasdelsur.com.ar" class="article-footer-logo">
+        <img src="../imagenes/logo.jpeg" alt="Tramas del Sur" />
+      </a>
+      <a href="https://tramasdelsur.com.ar" class="btn-volver-pie">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Volver al inicio
+      </a>
+    </footer>
+  </main>
+
+</body>
+</html>`;
+
+  // Crear elemento temporal para forzar la descarga en el cliente
+  const blob = new Blob([htmlFinal], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const dummyAnchor = document.createElement('a');
+  dummyAnchor.href = url;
+  dummyAnchor.download = `${generarSlug(titulo)}.html`;
+  
+  document.body.appendChild(dummyAnchor);
+  dummyAnchor.click();
+  document.body.removeChild(dummyAnchor);
+  URL.revokeObjectURL(url);
+});
+</script>
+
+</body>
+</html>
