@@ -5,13 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generador de Notas — Tramas del Sur</title>
   <style>
+    /* Estilos globales y fondo subiendo un nivel hacia la raíz */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f4f4f7;
-      color: #333;
+      background-color: #f0ece3;
+      background-image: url('../imagenes/fondo.jpeg');
+      background-size: cover;
+      background-attachment: fixed;
+      color: #1e1a17;
       line-height: 1.5;
       padding: 40px 20px;
       margin: 0;
+      position: relative;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    /* Capa de opacidad para garantizar legibilidad en el panel */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(240, 236, 227, 0.85);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Asegurar que los contenedores queden por encima del fondo */
+    #loginBox, #mainContainer {
+      position: relative;
+      z-index: 1;
     }
 
     /* Pantalla de Login */
@@ -24,6 +47,7 @@
       max-width: 360px;
       width: 100%;
       margin: 100px auto 0 auto;
+      border: 1px solid #cec8bc;
     }
     #loginBox h2 { color: #1e1a17; margin-top: 0; font-size: 20px; border-bottom: 2px solid #d95f1a; padding-bottom: 8px; }
     #loginBox input[type="password"] {
@@ -49,7 +73,6 @@
     }
     #loginBox button:hover { background: #b84d12; }
     
-    /* Mensaje de error visible */
     #error-msg { 
       color: #c0392b; 
       font-size: 14px; 
@@ -62,6 +85,18 @@
       display: none; 
     }
 
+    /* Encabezado del Panel con el Logo */
+    .editor-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .editor-logo {
+      height: 65px;
+      width: auto;
+      display: block;
+      margin: 0 auto 15px auto;
+    }
+
     /* Contenedor del Generador */
     #mainContainer {
       display: none;
@@ -70,17 +105,26 @@
       background: #ffffff;
       padding: 40px;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      border: 1px solid #cec8bc;
     }
-    #mainContainer h1 { margin-top: 0; color: #1e1a17; border-bottom: 2px solid #d95f1a; padding-bottom: 10px; font-size: 24px; }
+    #mainContainer h1 { 
+      margin-top: 0; 
+      color: #1e1a17; 
+      border-bottom: 2px solid #d95f1a; 
+      padding-bottom: 12px; 
+      font-size: 24px;
+      text-align: center;
+    }
     .instrucciones {
       background: #fdf8f5;
       border-left: 4px solid #d95f1a;
       padding: 15px;
       margin-bottom: 30px;
       font-size: 14px;
+      color: #4a443e;
     }
-    .instrucciones code { background: #eaeaea; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+    .instrucciones code { background: #eaeaea; padding: 2px 4px; border-radius: 3px; font-family: monospace; color: #1e1a17; }
     .form-group { margin-bottom: 20px; }
     .form-row { display: flex; gap: 20px; }
     .form-row .form-group { flex: 1; }
@@ -92,10 +136,12 @@
       border-radius: 4px;
       font-size: 15px;
       box-sizing: border-box;
+      background-color: #fafafa;
     }
     input[type="text"]:focus, textarea:focus, select:focus {
       outline: none;
       border-color: #d95f1a;
+      background-color: #ffffff;
       box-shadow: 0 0 0 3px rgba(217,95,26,0.1);
     }
     textarea { resize: vertical; font-family: inherit; }
@@ -112,6 +158,12 @@
       width: 100%;
     }
     .btn-submit:hover { background-color: #b84d12; }
+
+    @media (max-width: 700px) {
+      .form-row { flex-direction: column; gap: 0; }
+      body { padding: 20px 10px; }
+      #mainContainer { padding: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -125,7 +177,10 @@
   </div>
 
   <div id="mainContainer">
-    <h1>Generador de Notas — Tramas del Sur</h1>
+    <div class="editor-header">
+      <img src="../imagenes/logo.jpeg" alt="Tramas del Sur" class="editor-logo" />
+      <h1>Generador de Notas</h1>
+    </div>
     
     <div class="instrucciones">
       <strong>Guía rápida para el Cuerpo de la Nota:</strong><br>
@@ -194,12 +249,11 @@
   </div>
 
 <script>
-// 1. MANEJO DE AUTENTICACIÓN (Validación directa libre de restricciones de red)
+// 1. MANEJO DE AUTENTICACIÓN
 function verificarClave() {
   const clave = document.getElementById('passwordField').value;
   const errorDiv = document.getElementById('error-msg');
   
-  // Ocultamos el mensaje anterior ante un nuevo intento
   errorDiv.style.display = 'none';
 
   if (clave === "notasentrama$") {
@@ -290,7 +344,8 @@ document.getElementById('generatorForm').addEventListener('submit', function(e) 
 
   let bloqueImagen = "";
   if (imagen.trim() !== "") {
-    bloqueImagen = "    <div class=\"article-cover\">\n      <img src=\"" + escapeHtml(imagen) + "\" alt=\"" + escapeHtml(img_alt) + "\" />\n    </div>\n";
+    // Apunta correctamente a ../imagenes/ desde la carpeta editorial/
+    bloqueImagen = "    <div class=\"article-cover\">\n      <img src=\"../imagenes/" + escapeHtml(imagen) + "\" alt=\"" + escapeHtml(img_alt) + "\" />\n    </div>\n";
   }
 
   let htmlFinal = "";
@@ -316,7 +371,7 @@ document.getElementById('generatorForm').addEventListener('submit', function(e) 
   htmlFinal += "    .btn-volver svg {\n      width: 14px; height: 14px;\n      stroke: currentColor; fill: none;\n      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;\n    }\n";
   htmlFinal += "    main {\n      position: relative;\n      z-index: 1;\n      max-width: 760px;\n      margin: 0 auto;\n      padding: 7rem 2rem 6rem;\n    }\n";
   htmlFinal += "    .article-header {\n      margin-bottom: 3rem;\n      padding-bottom: 2rem;\n      border-bottom: 1px solid var(--rule);\n    }\n";
-  htmlFinal += "    .article-categoria {\n      font-size: 0.7rem;\n      letter-spacing: 0.22em;\n      text-transform: uppercase;\n精神  color: var(--orange);\n      margin-bottom: 1rem;\n    }\n";
+  htmlFinal += "    .article-categoria {\n      font-size: 0.7rem;\n      letter-spacing: 0.22em;\n      text-transform: uppercase;\n      color: var(--orange);\n      margin-bottom: 1rem;\n    }\n";
   htmlFinal += "    .article-titulo {\n      font-family: 'Playfair Display', serif;\n      font-size: clamp(2rem, 5vw, 3.2rem);\n      font-weight: 400;\n      line-height: 1.15;\n      margin-bottom: 1.2rem;\n    }\n";
   htmlFinal += "    .article-bajada {\n      font-family: 'Playfair Display', serif;\n      font-style: italic;\n      font-size: 1.15rem;\n      color: var(--ink-soft);\n      line-height: 1.65;\n      margin-bottom: 1.5rem;\n    }\n";
   htmlFinal += "    .article-meta {\n      display: flex;\n      align-items: center;\n      gap: 1.5rem;\n      font-size: 0.78rem;\n      color: var(--ink-muted);\n      letter-spacing: 0.04em;\n    }\n";
